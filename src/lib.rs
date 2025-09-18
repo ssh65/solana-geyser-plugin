@@ -1,21 +1,20 @@
+use solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin;
+
 pub mod plugin;
 pub mod server;
 pub mod service;
-
 pub mod geyser {
     tonic::include_proto!("geyser");
 }
 
 pub use crate::plugin::GeyserGrpcPlugin;
-pub use crate::server::start_grpc_server;
-pub use crate::service::MyGeyserService;
 
 // Used by validator to create the plugin
-#[unsafe(no_mangle)]
+#[no_mangle]
 #[allow(improper_ctypes_definitions)]
-pub unsafe extern "C" fn _create_plugin()
--> *mut dyn solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin {
-    Box::into_raw(Box::new(GeyserGrpcPlugin {
-        update_sender: None,
-    }))
+pub unsafe extern "C" fn _create_plugin() -> *mut dyn GeyserPlugin {
+    let plugin = Box::new(GeyserGrpcPlugin {
+        updates_sender: None,
+    });
+    Box::into_raw(plugin)
 }

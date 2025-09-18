@@ -1,27 +1,30 @@
 [package]
 name = "solana-geyser-plugin"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]  # This is important - creates a dynamic library
 
 [dependencies]
-solana-geyser-plugin-interface = "1.18"
-solana-sdk = "1.18"
+solana-geyser-plugin-interface = { path = "../../geyser-plugin-interface" }
+solana-sdk = { path = "../../sdk" }
+
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
 
 # gRPC and async dependencies (choose these matching, working versions)
-tonic = "0.11"
-prost = "0.12"
+tonic = "0.9"
+prost = "0.11"
 tokio = { version = "1.0", features = ["full"] }
-tokio-stream = "0.1.17"
+tokio-stream = "0.1"
 use = "0.0.1-pre.0"
 futures-util = "0.3.31"
 futures-core = "0.3.31"
+bs58 = "0.5.1"
 
 [build-dependencies]
-tonic-build = "0.11"
+tonic-build = "0.9"
+prost-build = "0.11"

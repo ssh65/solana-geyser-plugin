@@ -6,13 +6,13 @@ use tokio::sync::mpsc;
 
 #[derive(Debug)]
 pub struct GeyserGrpcPlugin {
-    pub update_sender: Option<mpsc::UnboundedSender<geyser::UpdateMessage>>,
+    pub updates_sender: Option<mpsc::UnboundedSender<geyser::UpdateMessage>>,
 }
 
 #[allow(unused_variables)]
 impl GeyserPlugin for GeyserGrpcPlugin {
     fn setup_logger(&self, logger: &'static dyn log::Log, level: log::LevelFilter) -> Result<()> {
-        // Just use the default, or customize if desired
+        // customize as needed
         Ok(())
     }
 
@@ -23,7 +23,7 @@ impl GeyserPlugin for GeyserGrpcPlugin {
     fn on_load(&mut self, _config_file: &str, _is_reload: bool) -> Result<()> {
         info!("Plugin loaded");
         let (tx, rx) = mpsc::unbounded_channel();
-        self.update_sender = Some(tx);
+        self.updates_sender = Some(tx);
 
         std::thread::spawn(move || {
             let rt = tokio::runtime::Builder::new_multi_thread()
@@ -46,13 +46,47 @@ impl GeyserPlugin for GeyserGrpcPlugin {
         &self,
         account: ReplicaAccountInfoVersions,
         slot: u64,
-        is_startup: bool,
+        _is_startup: bool,
     ) -> Result<()> {
-        if let Some(sender) = &self.update_sender {
-            // Compose and send update just as before
-            // ... (your AccountUpdate message)
-            // let update = ...
-            // let _ = sender.send(update);
+        if let Some(sender) = &self.updates_sender {
+            let (pubkey, lamports, owner, data) = match &account {
+                ReplicaAccountInfoVersions::V0_0_1(acc) => (
+                    bs58::encode(acc.pubkey).into_string(), // convert [u8; 32] to base58 string
+                    acc.lamports,
+                    bs58::encode(acc.owner).into_string(), // convert owner to base58 string
+                    acc.data.to_vec(),
+                ),
+
+                ReplicaAccountInfoVersions::V0_0_2(acc) => (
+                    bs58::encode(acc.pubkey).into_string(),
+                    acc.lamports,
+                    bs58::encode(acc.owner).into_string(),
+                    acc.data.to_vec(),
+                ),
+
+                ReplicaAccountInfoVersions::V0_0_3(acc) => (
+                    bs58::encode(acc.pubkey).into_string(),
+                    acc.lamports,
+                    bs58::encode(acc.owner).into_string(),
+                    acc.data.to_vec(),
+                ),
+            };
+
+            let account_update = geyser::AccountUpdate {
+                pubkey,
+                lamports,
+                owner,
+                data,
+                slot,
+            };
+
+            let update_msg = geyser::UpdateMessage {
+                update: Some(geyser::update_message::Update::AccountUpdate(
+                    account_update,
+                )),
+            };
+
+            let _ = sender.send(update_msg);
         }
         Ok(())
     }
@@ -88,7 +122,7 @@ impl GeyserPlugin for GeyserGrpcPlugin {
     }
     fn transaction_notifications_enabled(&self) -> bool {
         true
-    } // If you want to stream txs
+    }
     fn entry_notifications_enabled(&self) -> bool {
         false
     }

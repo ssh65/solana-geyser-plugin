@@ -11,7 +11,8 @@ pub use crate::server::start_grpc_server;
 pub use crate::service::MyGeyserService;
 
 // Used by validator to create the plugin
-#[no_mangle]
+#[unsafe(no_mangle)]
+#[allow(improper_ctypes_definitions)]
 pub unsafe extern "C" fn _create_plugin()
 -> *mut dyn solana_geyser_plugin_interface::geyser_plugin_interface::GeyserPlugin {
     Box::into_raw(Box::new(GeyserGrpcPlugin {

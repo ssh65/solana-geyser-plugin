@@ -2,7 +2,6 @@ use crate::geyser;
 use crate::server::start_grpc_server;
 use log::*;
 use solana_geyser_plugin_interface::geyser_plugin_interface::*;
-use std::sync::Arc;
 use tokio::sync::mpsc;
 
 #[derive(Debug)]
@@ -32,7 +31,7 @@ impl GeyserPlugin for GeyserGrpcPlugin {
                 .build()
                 .unwrap();
             rt.block_on(async move {
-                crate::start_grpc_server(rx).await;
+                start_grpc_server(rx).await;
             });
         });
 
